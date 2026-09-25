@@ -1,0 +1,10 @@
+{
+  "short_name": "المزرعة",
+  "name": "مزرعة العنب والأفوكادو",
+  "icons": [],
+  "start_url": ".",
+  "background_color": "#f4f6f8",
+  "theme_color": "#2e7d32",
+  "display": "standalone",
+  "orientation": "portrait"
+}
