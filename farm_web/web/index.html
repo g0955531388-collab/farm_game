@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاكاة مزرعة العنب والأفوكادو الشاملة</title>
+    <style>
+        :root { --primary: #2e7d32; --accent: #1976d2; --warning: #e65100; --bg: #e8f5e9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 15px; color: #263238; }
+        .container { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .header { grid-column: 1 / -1; background: linear-gradient(135deg, #1b5e20, #388e3c); color: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .card { background: white; padding: 18px; border-radius: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); }
+        .card h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #a5d6a7; padding-bottom: 8px; }
+        .status-bar { background: #f1f8e9; border-radius: 8px; padding: 10px; margin: 8px 0; font-weight: bold; }
+        button { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin: 5px 0; transition: transform 0.1s, background 0.2s; }
+        button:hover { opacity: 0.9; }
+        button:active { transform: scale(0.98); }
+        .btn-action { background: var(--accent); }
+        .btn-warn { background: var(--warning); }
+        .btn-tool { background: #455a64; }
+        .log-box { grid-column: 1 / -1; background: #212121; color: #76ff03; padding: 15px; border-radius: 10px; font-family: monospace; height: 120px; overflow-y: auto; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🍇 محاكاة مزرعة العنب والأفوكادو 🥑</h1>
+        <p>نظام إدارة المزرعة، المعدات، الأسمدة، والعمالة</p>
+    </div>
+
+    <div class="card">
+        <h3>📅 حالة المزرعة اليومية</h3>
+        <div class="status-bar">اليوم: <span id="day-val">1</span></div>
+        <div class="status-bar">💰 الرصيد المالي: <span id="money-val">1000</span> $</div>
+        <div class="status-bar">📦 المخزن: <span id="storage-val">0</span> كجم منتجات</div>
+        <button class="btn-action" onclick="nextDay()">⏭️ الانتقال لليوم التالي</button>
+    </div>
+
+    <div class="card">
+        <h3>🌱 الأشجار والمحاصيل</h3>
+        <p>💧 رطوبة العنب: <span id="grape-water">50</span>%</p>
+        <p>🌿 صحة العنب: <span id="grape-health">100</span>%</p>
+        <button onclick="waterCrop('grape')">💧 ري العنب (+30)</button>
+        <hr>
+        <p>💧 رطوبة الأفوكادو: <span id="avocado-water">50</span>%</p>
+        <p>🥑 صحة الأفوكادو: <span id="avocado-health">100</span>%</p>
+        <button onclick="waterCrop('avocado')">💧 ري الأفوكادو (+30)</button>
+    </div>
+
+    <div class="card">
+        <h3>🚜 الآليات والمعدات</h3>
+        <p>🚜 الجرار الزراعي: <span id="tractor-status">جاهز</span></p>
+        <p>🚛 شاحنة النقل: <span id="truck-status">في المزرعة</span></p>
+        <p>⛽ الوقود: <span id="fuel-val">100</span>%</p>
+        <div class="grid-2">
+            <button class="btn-tool" onclick="useTractor()">🚜 حراثة التربة</button>
+            <button class="btn-tool" onclick="refuel()">⛽ تعبئة وقود</button>
+        </div>
+        <button class="btn-warn" onclick="sellProducts()">🚛 نقل وبيع المحصول بالشاحنة</button>
+    </div>
+
+    <div class="card">
+        <h3>👨‍🌾 العمالة والمستلزمات</h3>
+        <p>👨‍🌾 عدد العمال: <span id="workers-val">2</span> عمال</p>
+        <p>🧪 مخزون السماد: <span id="fertilizer-val">5</span> أكياس</p>
+        <p>💊 الأدوية والمبيدات: <span id="medicine-val">3</span> عبوات</p>
+        <div class="grid-2">
+            <button onclick="applyFertilizer()">🧪 تسميد الأرض</button>
+            <button onclick="applyMedicine()">💊 رش المبيدات</button>
+        </div>
+        <button class="btn-action" onclick="hireWorker()">👨‍🌾 توظيف عامل جديد (50$)</button>
+    </div>
+
+    <div class="log-box" id="log-box">
+        [النظام]: تم تشغيل محاكاة المزرعة بنجاح...
+    </div>
+</div>
+
+<script>
+    let gameState = { day: 1, money: 1000, storage: 0, grapeWater: 50, grapeHealth: 100, avocadoWater: 50, avocadoHealth: 100, fuel: 100, workers: 2, fertilizer: 5, medicine: 3 };
+
+    function playSound(freq, type = 'sine', duration = 0.15) {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + duration);
+            osc.stop(ctx.currentTime + duration);
+        } catch (e) {}
+    }
+
+    function log(msg) {
+        const box = document.getElementById('log-box');
+        box.innerHTML += `<br>[اليوم ${gameState.day}]: ${msg}`;
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function updateUI() {
+        document.getElementById('day-val').innerText = gameState.day;
+        document.getElementById('money-val').innerText = gameState.money;
+        document.getElementById('storage-val').innerText = gameState.storage;
+        document.getElementById('grape-water').innerText = gameState.grapeWater;
+        document.getElementById('grape-health').innerText = gameState.grapeHealth;
+        document.getElementById('avocado-water').innerText = gameState.avocadoWater;
+        document.getElementById('avocado-health').innerText = gameState.avocadoHealth;
+        document.getElementById('fuel-val').innerText = gameState.fuel;
+        document.getElementById('workers-val').innerText = gameState.workers;
+        document.getElementById('fertilizer-val').innerText = gameState.fertilizer;
+        document.getElementById('medicine-val').innerText = gameState.medicine;
+    }
+
+    function waterCrop(crop) {
+        if (crop === 'grape') { gameState.grapeWater = Math.min(100, gameState.grapeWater + 30); log("تم ري كروم العنب."); }
+        else { gameState.avocadoWater = Math.min(100, gameState.avocadoWater + 30); log("تم ري أشجار الأفوكادو."); }
+        playSound(440, 'sine');
+        updateUI();
+    }
+
+    function useTractor() {
+        if (gameState.fuel < 20) { log("⚠️ الوقود غير كافٍ لتشغيل الجرار!"); playSound(150, 'sawtooth'); return; }
+        gameState.fuel -= 20;
+        gameState.grapeHealth = Math.min(100, gameState.grapeHealth + 10);
+        gameState.avocadoHealth = Math.min(100, gameState.avocadoHealth + 10);
+        log("🚜 قام الجرار بحراثة التربة وتهويتها (تحسنت صحة الأشجار).");
+        playSound(120, 'sawtooth', 0.4);
+        updateUI();
+    }
+
+    function refuel() {
+        if (gameState.money < 30) { log("❌ لا تملك مالاً كافياً لشراء الوقود!"); return; }
+        gameState.money -= 30;
+        gameState.fuel = 100;
+        log("⛽ تم إعادة تعبئة خزان وقود الجرار والشاحنة.");
+        playSound(300, 'square');
+        updateUI();
+    }
+
+    function applyFertilizer() {
+        if (gameState.fertilizer <= 0) { log("⚠️ لا يوجد سماد في المخزن!"); return; }
+        gameState.fertilizer--;
+        gameState.grapeHealth = Math.min(100, gameState.grapeHealth + 15);
+        log("🧪 تم إضافة السماد العضوي لزيادة إنتاجية الأشجار.");
+        playSound(520, 'triangle');
+        updateUI();
+    }
+
+    function applyMedicine() {
+        if (gameState.medicine <= 0) { log("⚠️ لا توجد مبيدات في المخزن!"); return; }
+        gameState.medicine--;
+        gameState.grapeHealth = 100;
+        gameState.avocadoHealth = 100;
+        log("💊 تم رش المبيدات لحماية المحصول من الآفات.");
+        playSound(600, 'sine');
+        updateUI();
+    }
+
+    function hireWorker() {
+        if (gameState.money < 50) { log("❌ الرصيد لا يكفي لتوظيف عامل!"); return; }
+        gameState.money -= 50;
+        gameState.workers++;
+        log("👨‍🌾 تم انضمام عامل جديد إلى فريق المزرعة.");
+        playSound(400, 'sine');
+        updateUI();
+    }
+
+    function sellProducts() {
+        if (gameState.storage <= 0) { log("⚠️ المخزن فارغ! لا يوجد محصول للبيع."); return; }
+        let income = gameState.storage * 5;
+        gameState.money += income;
+        log(`🚛 انطلقت الشاحنة إلى السوق وتم بيع ${gameState.storage} كجم بمبلغ ${income}$.`);
+        gameState.storage = 0;
+        playSound(800, 'square', 0.3);
+        updateUI();
+    }
+
+    function nextDay() {
+        gameState.day++;
+        gameState.grapeWater = Math.max(0, gameState.grapeWater - 20);
+        gameState.avocadoWater = Math.max(0, gameState.avocadoWater - 25);
+        let production = gameState.workers * 15;
+        gameState.storage += production;
+        log(`🌅 بدأ اليوم ${gameState.day}. قام العمال بجمع ${production} كجم من العنب والأفوكادو.`);
+        if (gameState.grapeWater < 20) gameState.grapeHealth -= 10;
+        if (gameState.avocadoWater < 20) gameState.avocadoHealth -= 10;
+        playSound(350, 'sine', 0.2);
+        updateUI();
+    }
+
+    updateUI();
+</script>
+</body>
+</html>

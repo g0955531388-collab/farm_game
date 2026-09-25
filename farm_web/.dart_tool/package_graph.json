@@ -1,0 +1,14 @@
+{
+  "roots": [
+    "farm_web"
+  ],
+  "packages": [
+    {
+      "name": "farm_web",
+      "version": "0.0.0",
+      "dependencies": [],
+      "devDependencies": []
+    }
+  ],
+  "configVersion": 1
+}
